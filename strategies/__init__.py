@@ -1,3 +1,4 @@
 from .keltner import Keltner
 from .logReg import LogReg
-__all__ = ["Keltner", "LogReg"]
+from .deepQ import DeepQ
+__all__ = ["Keltner", "LogReg", "DeepQ"]
