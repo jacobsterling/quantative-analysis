@@ -1,0 +1,43 @@
+{
+    "max_open_trades": 3,
+    "stake_currency": "USDT",
+    "stake_amount": 200,
+    "tradable_balance_ratio": 1,
+    "fiat_display_currency": "GBP",
+    "dry_run": true,
+    "dry_run_wallet": 1000,
+    "cancel_open_orders_on_exit": true,
+    "dataformat_ohlcv": "hdf5",
+    "dataformat_trades": "hdf5",
+    "unfilledtimeout": {
+        "entry": 10,
+        "exit": 30
+    },
+    "entry_pricing": {
+        "price_side": "same",
+        "use_order_book": true,
+        "order_book_top": 1,
+        "price_last_balance": 0.0,
+        "check_depth_of_market": {
+            "enabled": false,
+            "bids_to_ask_delta": 1
+        }
+    },
+    "exit_pricing": {
+        "price_side": "other",
+        "use_order_book": true,
+        "order_book_top": 1
+    },
+    "bot_name": "AiQuant",
+    "initial_state": "running",
+    "force_entry_enable": false,
+    "internals": {
+        "process_throttle_secs": 5
+    },
+    "add_config_files": [
+        "configs/private.json",
+        "configs/gateio.json",
+        "models/trend&momo/run_params.json"
+    ],
+    "user_data_dir": "F:/AiQuant"
+}
