@@ -3,8 +3,7 @@
         "enabled": true,
         "purge_old_models": true,
         "save_backtest_models": true,
-        "train_period_days": 30,
-        "backtest_period_days": 7,
+        "train_period_days": 15,
         "identifier": "trend&momo",
         "feature_parameters": {
             "include_timeframes": [
@@ -27,14 +26,17 @@
             "plot_feature_importances": 0
         },
         "data_split_parameters": {
-            "test_size": 0.33,
+            "test_size": 0,
             "random_state": 1,
             "shuffle": false
         },
-        "model_training_parameters": {},
+        "model_training_parameters": {
+            "n_estimators": 800
+        },
         "keras": false,
         "write_metrics_to_disk": false,
-        "conv_width": 1
+        "conv_width": 1,
+        "backtest_period_days": 7
     },
     "timeframe": "15m",
     "stake_amount": 200,
