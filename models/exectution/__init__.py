@@ -1,9 +1,9 @@
-from exectution.fixtures import Trade
-
-
 class ExecutionModel:
     def __init__(self, strategy_name: str):
-        self.strategy_name = strategy_name
+        self.__strategy_name = strategy_name
 
-    def execute(trade: Trade):
-        return
+    def generate_signal(self, price_data):
+        return "Hold"
+
+    def name(self):
+        return self.__strategy_name
