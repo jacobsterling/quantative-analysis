@@ -2,13 +2,17 @@
 pandas==2.2.2
 pandas-ta==0.3.14b
 TA-Lib==0.4.32
-
+statsmodels==0.14.2
 # execution
 ccxt==4.3.89
 
 # utilities
 python-dotenv==0.17.1
 pytest==6.2.4
+
+# data
+yfinance==0.2.43
+git+https://github.com/rongardF/tvdatafeed.git
 
 # visualization
 mplfinance==0.12.10b0
