@@ -1,6 +1,4 @@
-from pandas import DataFrame
 from numpy import std
-from ta.volume import VolumeWeightedAveragePrice
 from .strategy_base import ExecutionBase
 
 
@@ -16,10 +14,11 @@ class OrderFlowAnalysis(ExecutionBase):
         """
         Calculate the VWAP for the given data.
         """
-        vwap = VolumeWeightedAveragePrice(
-            high=df["high"], low=df["low"], close=df["close"], volume=df["volume"]
-        )
-        df["vwap"] = vwap.volume_weighted_average_price()
+        # Typical price: (high + low + close) / 3
+        typical_price = (df["high"] + df["low"] + df["close"]) / 3
+
+        # Calculate VWAP
+        df["vwap"] = (typical_price * df["volume"]).cumsum() / df["volume"].cumsum()
 
         # Calculate standard deviation of VWAP
         std_dev = std(df["vwap"])
@@ -51,7 +50,7 @@ class OrderFlowAnalysis(ExecutionBase):
         # # Calculate order flow volatility
         # df["order_flow_volatility"] = df["order_flow"].rolling(window=10).std()
 
-        self.ohlcv = df
+        self._ohlcv = df
 
     def populate_orderbook_indicators(self):
         df = self.orderbook
@@ -65,7 +64,7 @@ class OrderFlowAnalysis(ExecutionBase):
         # Calculate cumulative order flow (COF)
         df["cumulative_order_flow"] = (df["bid_quantity"] - df["ask_quantity"]).cumsum()
 
-        self.orderbook = df
+        self._orderbook = df
 
     def populate_entry_signals(self):
         """
@@ -73,20 +72,43 @@ class OrderFlowAnalysis(ExecutionBase):
         Returns a DataFrame with entry and exit signals.
         """
 
-        df = self.orderbook
-
         # Entry Signal: Combining the conditions
-        df["entry_signal"] = (
-            (df["spread"] < self.spread_threshold)
-            & (df["order_imbalance"] > self.imbalance_threshold)
-            & (df["cumulative_order_flow"] > self.cof_threshold)
+        self._orderbook["entry_signal"] = (
+            (self._orderbook["spread"] < self.spread_threshold)
+            & (self._orderbook["order_imbalance"] > self.imbalance_threshold)
+            & (self._orderbook["cumulative_order_flow"] > self.cof_threshold)
         )
 
         # Exit Signal: Opposite conditions for exit
-        df["exit_signal"] = (
-            (df["spread"] > self.spread_threshold)
-            | (df["order_imbalance"] < -self.imbalance_threshold)
-            | (df["cumulative_order_flow"].diff() < 0)
+        self._orderbook["exit_signal"] = (
+            (self._orderbook["spread"] > self.spread_threshold)
+            | (self._orderbook["order_imbalance"] < -self.imbalance_threshold)
+            | (self._orderbook["cumulative_order_flow"].diff() < 0)
         )
 
-        self.orderbook = df
+        # Set the side of the trade based on VWAP and standard deviation band
+        self._ohlcv["trade_side"] = ""
+        self._ohlcv.loc[
+            self._ohlcv["close"] < self._ohlcv["vwap_std_dev_lower_1"], "trade_side"
+        ] = "long"
+        self._ohlcv.loc[
+            self._ohlcv["close"] > self._ohlcv["vwap_std_dev_upper_1"], "trade_side"
+        ] = "short"
+
+        # Set the risk based on the standard deviation band
+        self._ohlcv["risk_pct"] = 0  # Initialize risk to 0
+        self._ohlcv.loc[
+            (self._ohlcv["close"] < self._ohlcv["vwap_std_dev_lower_1"]), "risk_pct"
+        ] = 1  # 1% risk for lower 1 std deviation
+
+        self._ohlcv.loc[
+            (self._ohlcv["close"] < self._ohlcv["vwap_std_dev_lower_2"]), "risk_pct"
+        ] = 2  # 2% risk for lower 2 std deviation
+
+        self._ohlcv.loc[
+            (self._ohlcv["close"] > self._ohlcv["vwap_std_dev_upper_1"]), "risk_pct"
+        ] = 1  # 1% risk for upper 1 std deviation
+
+        self._ohlcv.loc[
+            (self._ohlcv["close"] > self._ohlcv["vwap_std_dev_upper_2"]), "risk_pct"
+        ] = 2  # 2% risk for upper 2 std deviation

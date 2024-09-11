@@ -57,7 +57,7 @@ class ExecutionBase:
         self,
     ):
         self._orderbook = fetch_orderbook(self.ctx, self.ticker)
-        self.populate_orderbook_indicators(self)
+        self.populate_orderbook_indicators()
 
     def update_ohlcv(
         self,
