@@ -6,6 +6,7 @@
 logfile.txt
 data/*
 configs
+*.csv
 
 #ml files
 sub-train-*

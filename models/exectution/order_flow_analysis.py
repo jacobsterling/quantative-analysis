@@ -26,6 +26,7 @@ class OrderFlowAnalysis(ExecutionBase):
         # Upper and Lower std dev bands
         for i in range(1, 4):
             df[f"vwap_std_dev_upper_{i}"] = df["vwap"] + i * std_dev
+
             df[f"vwap_std_dev_lower_{i}"] = df["vwap"] - i
 
         """

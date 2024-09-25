@@ -1,0 +1,9 @@
+version: '3'
+services:
+  freqtrade:
+    image: freqtradeorg/freqtrade:stable
+    container_name: freqtrade
+    volumes:
+      - ./user_data:/freqtrade/user_data
+    command: >
+      trade --strategy SampleStrategy --config /freqtrade/user_data/config.json
