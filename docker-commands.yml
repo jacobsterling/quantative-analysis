@@ -1,2 +1,0 @@
-
-backtesting --strategy OrderFlowAnalysis --config /freqtrade/config.json --timerange 20230101-20240101 --timeframe 1m --enable-protections --datadir /freqtrade/user_data/data

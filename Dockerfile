@@ -28,13 +28,23 @@ RUN git clone https://github.com/freqtrade/freqtrade.git /tmp/freqtrade && \
 COPY requirements.txt /freqtrade/
 RUN pip install --no-cache-dir numpy cython
 RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir python-dotenv
 
 # Install Freqtrade
 RUN pip install -e .
 
+# Copy the configuration module and main.py
+COPY configuration /freqtrade/configuration
+COPY main.py /freqtrade/main.py
+COPY constants.py /freqtrade/constants.py
+
 # Create a non-root user
 RUN useradd -m freqtrader
 RUN chown -R freqtrader:freqtrader /freqtrade
+
+# Copy and make the startup script executable
+COPY start.sh /freqtrade/start.sh
+RUN chmod +x /freqtrade/start.sh
 
 # Switch to non-root user
 USER freqtrader
@@ -42,8 +52,5 @@ USER freqtrader
 # Expose port 8080 for the Freqtrade API
 EXPOSE 8080
 
-# Set the entrypoint
-ENTRYPOINT ["freqtrade"]
-
-# Default command (can be overridden)
-CMD ["trade", "--config", "config.json"]
+# Default command (can be overridden by docker-compose)
+CMD ["/bin/bash", "/freqtrade/start.sh"]

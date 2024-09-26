@@ -12,11 +12,14 @@ MODEL_DIR = PROJECT_ROOT / "freqaimodels"
 
 # Config files
 CONFIG_DIR = PROJECT_ROOT / "config.json"
+CONFIGURATION_DIR = PROJECT_ROOT / "configuration"
 
 # Results and output
 TRADES_DB_FILE = PROJECT_ROOT / "tradesv3.sqlite"
 
 LOGS_DIR = PROJECT_ROOT / "logs"
+
+DB_URL = "sqlite:////freqtrade/user_data/tradesv3.sqlite"
 
 
 def get_model_path(model_name: str) -> Path:
