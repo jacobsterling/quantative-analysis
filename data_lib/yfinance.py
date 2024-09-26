@@ -1,4 +1,4 @@
-from data_lib.yfinance import Ticker
+from yfinance import Ticker
 from pandas import DataFrame, Timestamp
 
 
