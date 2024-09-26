@@ -1,9 +1,5 @@
-from dotenv import load_dotenv
-from os import getenv
 from dataclasses import dataclass
 from pandas import Timestamp
-
-load_dotenv()
 
 
 @dataclass(frozen=True)
@@ -60,15 +56,3 @@ class CCTXConfig:
     trading_mode: str
     exchange: CCTXExchangeConfig
     pairs: list
-
-
-KUCOIN_CONFIG: CCTXExchangeConfig = CCTXExchangeConfig(
-    name="kucoin",
-    pair_whitelist=[".*/USDT:USDT", ".*/USDT"],
-    pair_blacklist=["KCS/USDT"],
-    key=getenv("KUCOIN_API"),
-    secret=getenv("KUCOIN_SECRET"),
-    password=getenv("KUCOIN_PASSWORD"),
-    ccxt_async_config={},
-    ccxt_config={},
-)

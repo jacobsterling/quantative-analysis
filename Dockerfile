@@ -19,13 +19,15 @@ RUN curl -L http://prdownloads.sourceforge.net/ta-lib/ta-lib-0.4.0-src.tar.gz | 
     cd .. && \
     rm -rf ta-lib
 
+# Clone Freqtrade repository
+RUN git clone https://github.com/freqtrade/freqtrade.git /tmp/freqtrade && \
+    cp -r /tmp/freqtrade/* /freqtrade/ && \
+    rm -rf /tmp/freqtrade
+
 # Copy requirements.txt and install Python dependencies
 COPY requirements.txt /freqtrade/
 RUN pip install --no-cache-dir numpy cython
 RUN pip install --no-cache-dir -r requirements.txt
-
-# Clone Freqtrade repository
-RUN git clone https://github.com/freqtrade/freqtrade.git /freqtrade
 
 # Install Freqtrade
 RUN pip install -e .
