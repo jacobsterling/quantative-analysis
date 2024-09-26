@@ -6,10 +6,11 @@ services:
     volumes:
       - ./:/freqtrade/user_data
       - ./config.json:/freqtrade/config.json
-      - ./tradesv3.sqlite:/freqtrade/user_data/tradesv3.sqlite
     command: >
-      trade --strategy ${STRATEGY:-StrategyTemplate} --config /freqtrade/config.json
+      test-pairlist --config /freqtrade/config.json
     ports:
       - "8080:8080"
     env_file:
       - .env
+
+# trade --strategy OrderFlowAnalysis --config /freqtrade/config.json --strategy-path /freqtrade/user_data/strategies --user-data-dir /freqtrade/user_data --dry-run --verbose

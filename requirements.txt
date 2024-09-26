@@ -8,7 +8,7 @@ sklearn_time==0.0.1
 snapml==1.15.6
 
 # execution
-ccxt==4.3.89
+ccxt==4.4.8
 
 # utilities
 python-dotenv==1.0.1

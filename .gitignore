@@ -9,7 +9,7 @@ configs
 *.csv
 *.db
 
-freqtrade/
+freqtrade
 
 #ml files
 sub-train-*

@@ -32,8 +32,12 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Install Freqtrade
 RUN pip install -e .
 
-# Copy your custom files
-COPY . /freqtrade/user_data/
+# Create a non-root user
+RUN useradd -m freqtrader
+RUN chown -R freqtrader:freqtrader /freqtrade
+
+# Switch to non-root user
+USER freqtrader
 
 # Expose port 8080 for the Freqtrade API
 EXPOSE 8080
