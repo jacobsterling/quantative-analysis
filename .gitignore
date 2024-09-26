@@ -9,6 +9,8 @@ configs
 *.csv
 *.db
 
+freqtrade/
+
 #ml files
 sub-train-*
 cb_*
@@ -94,6 +96,7 @@ target/
 .venv
 .idea
 .vscode
+config.json
 
 .pytest_cache/
 .mypy_cache/

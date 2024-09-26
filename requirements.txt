@@ -17,7 +17,7 @@ pytest==6.2.4
 # data
 yfinance==0.2.43
 git+https://github.com/rongardF/tvdatafeed.git
-sqlalchemy==1.4.20
+sqlalchemy>=2.0.0
 ipython-sql==0.5.0
 
 # visualization
