@@ -30,6 +30,7 @@ BINANCE_CONFIG = {
     "password": os.getenv("BINANCE_PASSWORD"),
     "pair_whitelist": PAIR_WHITELIST,
     "pair_blacklist": PAIR_BLACKLIST,
+    "use_public_trades": True,
     **_CCTX_CONFIG,
 }
 
@@ -41,6 +42,7 @@ KUCOINFUTURES_CONFIG = {
     "password": os.getenv("KUCOIN_PASSWORD"),
     "pair_whitelist": PAIR_WHITELIST,
     "pair_blacklist": PAIR_BLACKLIST,
+    "use_public_trades": True,
     **_CCTX_CONFIG,
 }
 

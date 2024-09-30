@@ -1,7 +1,14 @@
 from pathlib import Path
+import os
 
 # Base project directory
 PROJECT_ROOT = Path(__file__).parent
+
+
+# set cwd to project root inside jupyter notebook
+def set_cwd_to_project_root():
+    os.chdir(PROJECT_ROOT)
+
 
 # Data directories
 DATA_DIR = PROJECT_ROOT / "data"
@@ -14,12 +21,13 @@ MODEL_DIR = PROJECT_ROOT / "freqaimodels"
 CONFIG_DIR = PROJECT_ROOT / "config.json"
 CONFIGURATION_DIR = PROJECT_ROOT / "configuration"
 
+
 # Results and output
 TRADES_DB_FILE = PROJECT_ROOT / "tradesv3.sqlite"
 
 LOGS_DIR = PROJECT_ROOT / "logs"
 
-DB_URL = "sqlite:////freqtrade/user_data/tradesv3.sqlite"
+DB_URL = "sqlite:////freqtrade/tradesv3.sqlite"
 
 
 def get_model_path(model_name: str) -> Path:

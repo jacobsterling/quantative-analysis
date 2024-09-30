@@ -10,7 +10,7 @@ from configuration.execution import (
     UNFILLED_TIMEOUT,
     RESTRICTIONS,
 )
-from constants import DB_URL
+from constants import DB_URL, CONFIG_DIR, DATA_DIR
 
 # Load environment variables from .env file
 load_dotenv(".env")
@@ -19,6 +19,8 @@ load_dotenv(".env")
 def generate_config(exchange: str):
     config = {
         "$schema": "https://schema.freqtrade.io/schema.json",
+        "user_data_dir": ".",
+        "datadir": str(DATA_DIR),
         "fiat_display_currency": "USD",
         **RESTRICTIONS,
         "unfilledtimeout": UNFILLED_TIMEOUT,
@@ -34,8 +36,10 @@ def generate_config(exchange: str):
         "internals": {"process_throttle_secs": 5},
     }
 
-    with open("/freqtrade/config.json", "w") as f:
+    with open(CONFIG_DIR, "w") as f:
         json.dump(config, f, indent=4)
+
+    return config
 
 
 if __name__ == "__main__":

@@ -1,56 +1,55 @@
-# Use Python 3.11 as the base image
-FROM python:3.11-slim-bullseye
+FROM python:3.12.6-slim-bookworm as base
 
-# Set the working directory in the container
+# Setup env
+ENV LANG C.UTF-8
+ENV LC_ALL C.UTF-8
+ENV PYTHONDONTWRITEBYTECODE 1
+ENV PYTHONFAULTHANDLER 1
+ENV PATH=/home/ftuser/.local/bin:$PATH
+ENV FT_APP_ENV="docker"
+ENV LD_LIBRARY_PATH /usr/local/lib
+
+# Prepare environment
+RUN mkdir /freqtrade \
+    && apt-get update \
+    && apt-get -y install --no-install-recommends sudo libatlas3-base curl sqlite3 libhdf5-serial-dev libgomp1 \
+    build-essential libssl-dev git libffi-dev libgfortran5 pkg-config cmake gcc \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/* \
+    && useradd -u 1000 -G sudo -U -m -s /bin/bash ftuser \
+    && chown ftuser:ftuser /freqtrade \
+    && echo "ftuser ALL=(ALL) NOPASSWD: /bin/chown" >> /etc/sudoers
+
 WORKDIR /freqtrade
 
-# Install system dependencies
-RUN apt-get update && \
-    apt-get install -y curl build-essential libssl-dev libffi-dev libatlas-base-dev libopenjp2-7 libtiff5 git && \
-    apt-get clean && \
-    rm -rf /var/lib/apt/lists/*
+# Install TA-lib
+RUN curl -L -o /tmp/ta-lib-0.4.0-src.tar.gz https://sourceforge.net/projects/ta-lib/files/ta-lib/0.4.0/ta-lib-0.4.0-src.tar.gz/download \
+    && tar xvzf /tmp/ta-lib-0.4.0-src.tar.gz -C /tmp \
+    && cd /tmp/ta-lib \
+    && ./configure --prefix=/usr \
+    && make \
+    && make install \
+    && rm -rf /tmp/ta-lib-0.4.0-src.tar.gz /tmp/ta-lib
 
-# Install TA-Lib
-RUN curl -L http://prdownloads.sourceforge.net/ta-lib/ta-lib-0.4.0-src.tar.gz | tar xvz && \
-    cd ta-lib && \
-    ./configure --prefix=/usr && \
-    make && \
-    make install && \
-    cd .. && \
-    rm -rf ta-lib
+# Install dependencies including Freqtrade
+COPY --chown=ftuser:ftuser requirements.txt /freqtrade/
+USER ftuser
+RUN pip install --user --no-cache-dir --upgrade pip wheel \
+    && pip install --user --no-cache-dir -r requirements.txt \
+    && pip install --user --no-cache-dir freqtrade[hyperopt]
 
-# Clone Freqtrade repository
-RUN git clone https://github.com/freqtrade/freqtrade.git /tmp/freqtrade && \
-    cp -r /tmp/freqtrade/* /freqtrade/ && \
-    rm -rf /tmp/freqtrade
+# Install and execute
+COPY --chown=ftuser:ftuser . /freqtrade/
 
-# Copy requirements.txt and install Python dependencies
-COPY requirements.txt /freqtrade/
-RUN pip install --no-cache-dir numpy cython
-RUN pip install --no-cache-dir -r requirements.txt
-RUN pip install --no-cache-dir python-dotenv
+# Install Freqtrade UI
+RUN freqtrade install-ui
 
-# Install Freqtrade
-RUN pip install -e .
-
-# Copy the configuration module and main.py
-COPY configuration /freqtrade/configuration
-COPY main.py /freqtrade/main.py
-COPY constants.py /freqtrade/constants.py
-
-# Create a non-root user
-RUN useradd -m freqtrader
-RUN chown -R freqtrader:freqtrader /freqtrade
-
-# Copy and make the startup script executable
-COPY start.sh /freqtrade/start.sh
+# Make the startup script executable
+COPY --chown=ftuser:ftuser start.sh /freqtrade/
 RUN chmod +x /freqtrade/start.sh
-
-# Switch to non-root user
-USER freqtrader
 
 # Expose port 8080 for the Freqtrade API
 EXPOSE 8080
 
-# Default command (can be overridden by docker-compose)
+# Default command
 CMD ["/bin/bash", "/freqtrade/start.sh"]

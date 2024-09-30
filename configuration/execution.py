@@ -27,6 +27,16 @@ _TRADING_MODE = {
     "margin_mode": "isolated",
 }
 
+ORDERFLOW = {
+    "cache_size": 1000,
+    "max_candles": 1500,
+    "scale": 0.5,
+    "stacked_imbalance_range": 3,  # needs at least this amount of imbalance next to each other
+    "imbalance_volume": 1,  # filters out below
+    "imbalance_ratio": 3,  # filters out ratio lower than
+}
+
+
 PAIR_WHITELIST = ["BTC/USDT:USDT", "ETH/USDT:USDT"]
 PAIR_BLACKLIST = []
 
@@ -38,7 +48,10 @@ RESTRICTIONS = {
     "dry_run": False,
     "cancel_open_orders_on_exit": False,
     "force_entry_enable": False,
+    "order_book_max": 5,
+    "order_book_min": 1,
     **_TRADING_MODE,
+    "orderflow": ORDERFLOW,
 }
 
 if DRY_RUN:
