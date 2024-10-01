@@ -21,6 +21,8 @@ def generate_config(exchange: str):
         "$schema": "https://schema.freqtrade.io/schema.json",
         "user_data_dir": ".",
         "datadir": str(DATA_DIR),
+        "data_format": "feather",
+        "dataformat_trades": "feather",
         "fiat_display_currency": "USD",
         **RESTRICTIONS,
         "unfilledtimeout": UNFILLED_TIMEOUT,

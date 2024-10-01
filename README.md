@@ -1,125 +1,125 @@
-## What is FreqTrade?
+# Quantitative Analysis and Strategy Creation
 
-FreqTrade is a free and open-source crypto trading bot written in Python. It is designed to support all major exchanges and be controlled via Telegram or through its built-in webserver. Some key features of FreqTrade include:
+Welcome to the Quantitative Analysis and Strategy Creation project. This repository focuses on developing and analyzing various financial strategies using quantitative methods. The primary work is done within the `notebooks` directory, where you will find Jupyter notebooks detailing different strategies and their performance analyses.
 
-- Backtesting and hyperopt (optimization) capabilities
-- Extensible strategy framework
-- Edge positioning
-- Whitelist and blacklist configuration
-- Live trading and dry-run (simulation) modes
-- Telegram integration for easy control and monitoring
+## Table of Contents
 
-## Installation
+- [Introduction](#introduction)
+- [Project Structure](#project-structure)
+- [Getting Started](#getting-started)
+- [Dependencies](#dependencies)
+- [Usage](#usage)
+- [Contributing](#contributing)
+- [License](#license)
 
-1. Clone the repository:
-   ```
-   git clone https://github.com/jacobsterling/quantitative-analysis.git
-   cd quantitative-analysis
-   ```
+## Introduction
 
-2. Create a virtual environment and activate it:
-   ```
-   python -m venv venv
-   source venv/bin/activate  # On Windows, use `venv\Scripts\activate`
-   ```
-
-3. Install the required dependencies:
-   ```
-   pip install -r requirements.txt
-   ```
-
-4. Set up your environment variables:
-   Create a `.env` file in the root directory and add your API credentials:
-   ```
-   TV_USERNAME=your_tradingview_username
-   TV_PASSWORD=your_tradingview_password
-   ```
-
-## FreqTrade Setup
-
-1. Install FreqTrade dependencies:
-   ```
-   pip install freqtrade
-   ```
-
-2. Initialize FreqTrade configuration:
-   ```
-   freqtrade create-userdir --userdir user_data
-   ```
-
-3. Create a new configuration file:
-   ```
-   freqtrade new-config --config user_data/config.json
-   ```
-
-4. Edit the `user_data/config.json` file to set up your exchange API keys, trading pairs, and other preferences.
-
-5. Create a new strategy:
-   ```
-   freqtrade new-strategy --strategy MyAwesomeStrategy
-   ```
-
-6. Edit the strategy file in `user_data/strategies/MyAwesomeStrategy.py` to implement your trading logic.
-
-## Usage
-
-### Running Strategies
-
-To run a strategy, use the Jupyter notebooks provided in the `notebooks/` directory. For example:
-
-```
-jupyter notebook notebooks/strategy_example.ipynb
-```
-
-### Analyzing Options
-
-For options analysis, refer to the notebooks in `notebooks/black_scholes/`:
-
-- `pricing_model.ipynb`: Black-Scholes option pricing
-- `volatility_surface_analysis.ipynb`: Volatility surface visualization
-
-### Order Flow Analysis
-
-Use the `notebooks/order_heat_map.ipynb` notebook to visualize order flow and market depth.
-
-### Running FreqTrade
-
-To start FreqTrade with your custom strategy:
-
-```
-freqtrade trade -c user_data/config.json -s StrategyName
-```
-
-For backtesting:
-
-```
-freqtrade backtesting -c user_data/config.json -s StrategyName --timerange 20210101-20210331
-```
+This project utilizes the Freqtrade framework for creating and automating trading strategies. Freqtrade provides a robust infrastructure for developing, backtesting, and deploying algorithmic trading bots. By leveraging Freqtrade's capabilities, we can efficiently implement, evaluate, and optimize various trading strategies to identify the most promising ones for live trading.
 
 ## Project Structure
 
-- `data_lib/`: Data fetching and processing utilities
-- `strategies/`: FreqTrade Trading strategy implementations
-- `notebooks/`: Jupyter notebooks for analysis and visualization
-- `docker-compose.yml`: Docker configuration for running the project
-- `user_data/`: FreqTrade user data directory
-  - `strategies/`: Custom FreqTrade strategies
-  - `config.json`: FreqTrade configuration file
+.
+├── notebooks
+│   ├── back_testing
+│   │   ├── strategy_analysis_example.ipynb
+│   │   ├── CVDDivergence_analysis.ipynb
+│   ├── black_scholes
+│   │   └── hedging_strategies.ipynb
+│   ├── kucoin_futures_pairs_analysis.ipynb
+│   ├── order_heat_map.ipynb
+│   ├── portfolio_analysis.ipynb
+│   └── trade_analysis.ipynb
+├── data
+│   ├── historical_data.csv
+│   └── additional_data.csv
+├── src
+│   ├── strategy.py
+│   └── analysis.py
+├── strategies
+│   ├── __init__.py
+│   └── risk
+│       └── __init__.py
+├── README.md
+├── requirements.txt
+└── quantative-analysis.code-workspace
 
-## FreqTrade Documentation
+- **notebooks/**: Contains Jupyter notebooks for backtesting, strategy analysis, portfolio analysis, and other quantitative analyses.
+  - **back_testing/**: Notebooks related to backtesting various strategies.
+  - **black_scholes/**: Notebooks focusing on Black-Scholes model and related hedging strategies.
+  - Other notebooks for specific analyses like KuCoin futures pairs, order heat maps, and trade analysis.
+- **data/**: Directory for storing historical and additional data used in the notebooks.
+- **src/**: Source code for strategy implementation and analysis tools.
+- **strategies/**: Contains strategy modules and risk management implementations.
+- **requirements.txt**: List of dependencies required to run the project.
+- **quantative-analysis.code-workspace**: VS Code workspace configuration file.
 
-For more detailed information on using FreqTrade, please refer to the official documentation:
+## Getting Started
 
-- [FreqTrade Documentation](https://www.freqtrade.io/en/stable/)
-- [Strategy Customization](https://www.freqtrade.io/en/stable/strategy-customization/)
-- [Configuration](https://www.freqtrade.io/en/stable/configuration/)
-- [Backtesting](https://www.freqtrade.io/en/stable/backtesting/)
-- [Hyperopt](https://www.freqtrade.io/en/stable/hyperopt/)
+### Development Setup
+To get started with this project, clone the repository and install the necessary dependencies.
+
+bash
+git clone https://github.com/yourusername/quantitative-analysis.git
+cd quantitative-analysis
+pip install -r requirements.txt
+
+### Running the bot
+
+To run the bot using Docker, follow these steps:
+
+1. **Build the Docker image**:
+   
+   Navigate to the root directory of the project and build the Docker image using the following command:
+
+   ```bash
+   docker build -t quantative-analysis-bot .
+   ```
+
+2. **Run the Docker container**:
+
+   Once the image is built, you can run the container with the following command:
+
+   ```bash
+   docker compose up
+   ```
+
+   This command will:
+   - Run the container.
+   - Mount the directory from your host to the container.
+   - Run the freqtrade command inside `start.sh`
+
+3. **Stopping the container**:
+
+   To stop the running container, use the following command:
+
+   ```bash
+   docker compose down
+   ```
+
+These steps will help you build and run the bot using Docker, ensuring a consistent and isolated environment for your quantitative analysis and strategy creation.
+
+## Dependencies
+
+The project relies on several Python libraries for data analysis and visualization. The main dependencies are listed in the `requirements.txt` file.
+
+## Usage
+
+Navigate to the `notebooks` directory and open any of the Jupyter notebooks to explore different strategies and their analyses.
+
+bash
+cd notebooks
+jupyter notebook
 
 ## Contributing
 
-Contributions are welcome! Please feel free to submit a Pull Request.
+We welcome contributions to enhance the project. Please fork the repository and create a pull request with your changes.
+
+1. Fork the repository
+2. Create a new branch (`git checkout -b feature-branch`)
+3. Commit your changes (`git commit -am 'Add new feature'`)
+4. Push to the branch (`git push origin feature-branch`)
+5. Create a new Pull Request
 
 ## License
 
-This project is licensed under the MIT License.
+This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.

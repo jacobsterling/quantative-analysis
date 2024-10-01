@@ -14,7 +14,7 @@ from freqtrade.persistence import Trade
 
 class CVDDivergence(IStrategy):
     INTERFACE_VERSION = 3
-    timeframe = "5m"
+    timeframe = "1m"
     trailing_stop = False
     process_only_new_candles = False
     use_exit_signal = True
@@ -40,6 +40,8 @@ class CVDDivergence(IStrategy):
 
     max_trades = IntParameter(1, 9, default=1, space="buy", optimize=True)
 
+    poc_histogram_bins = IntParameter(10, 100, default=50, space="buy", optimize=True)
+
     @property
     def _allowance_per_trade(self) -> float:
 
@@ -58,17 +60,9 @@ class CVDDivergence(IStrategy):
 
         dataframe.set_index("date", inplace=True)
 
-        # Apply all daily calculations in one groupby operation
         dataframe = (
             dataframe.groupby("day")
-            .apply(
-                lambda group: self._daily_calculations(
-                    group,
-                    self.pivot_window.value,
-                    self.divergence_threshold.value,
-                    self.cvd_ma_window.value,
-                )
-            )
+            .apply(self._daily_calculations)
             .reset_index(level=0, drop=True)
         )
 
@@ -102,37 +96,37 @@ class CVDDivergence(IStrategy):
 
     def populate_exit_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
 
-        dataframe.loc[dataframe["divergence"] < 0, ["exit_long", "exit_tag"]] = (
-            1,
-            "Bear_Div",
-        )
+        # dataframe.loc[dataframe["divergence"] < 0, ["exit_long", "exit_tag"]] = (
+        #     1,
+        #     "Bear_Div",
+        # )
 
         dataframe.loc[
             dataframe["high"] >= dataframe["vwap_upper_2"],
             ["exit_long", "exit_short", "exit_tag"],
         ] = (1, 1, "VWAP_Upper")
 
-        long_poc_exit = dataframe["poc"] >= dataframe["vwap_upper_1"]
+        long_poc_exit = dataframe["bear_poc_lower"] >= dataframe["vwap_upper_1"]
 
         dataframe.loc[
-            (dataframe["high"] >= dataframe["poc"]) & long_poc_exit,
+            (dataframe["high"] >= dataframe["bear_poc_lower"]) & long_poc_exit,
             ["exit_long", "exit_tag"],
         ] = (1, "POC_Upper")
 
-        dataframe.loc[dataframe["divergence"] > 0, ["exit_short", "exit_tag"]] = (
-            1,
-            "Bull_Div",
-        )
+        # dataframe.loc[dataframe["divergence"] > 0, ["exit_short", "exit_tag"]] = (
+        #     1,
+        #     "Bull_Div",
+        # )
 
         dataframe.loc[
             dataframe["low"] <= dataframe["vwap_lower_2"],
             ["exit_short", "exit_long", "exit_tag"],
         ] = (1, 1, "VWAP_Lower")
 
-        short_poc_exit = dataframe["poc"] <= dataframe["vwap_lower_1"]
+        short_poc_exit = dataframe["bull_poc_upper"] <= dataframe["vwap_lower_1"]
 
         dataframe.loc[
-            (dataframe["low"] <= dataframe["poc"]) & short_poc_exit,
+            (dataframe["low"] <= dataframe["bull_poc_upper"]) & short_poc_exit,
             ["exit_short", "exit_tag"],
         ] = (1, "POC_Lower")
 
@@ -156,9 +150,11 @@ class CVDDivergence(IStrategy):
             bull_invalidated = (
                 (bull_slice["low"] <= bull_slice["vwap_lower_2"]).cummax().astype(bool)
             )
-            valid_poc = bull_slice["poc"] <= bull_slice["vwap"]
+            valid_poc = bull_slice["bull_poc_upper"] <= bull_slice["vwap"]
             long_entry = (
-                (bull_slice["low"] <= bull_slice["poc"]) & ~bull_invalidated & valid_poc
+                (bull_slice["low"] <= bull_slice["bull_poc_upper"])
+                & ~bull_invalidated
+                & valid_poc
             )
             group.loc[bull_slice.index[long_entry], ["enter_long", "enter_tag"]] = (
                 1,
@@ -170,9 +166,9 @@ class CVDDivergence(IStrategy):
             bear_invalidated = (
                 (bear_slice["high"] >= bear_slice["vwap_upper_2"]).cummax().astype(bool)
             )
-            valid_poc = bear_slice["poc"] >= bear_slice["vwap"]
+            valid_poc = bear_slice["bear_poc_lower"] <= bear_slice["vwap"]
             short_entry = (
-                (bear_slice["high"] >= bear_slice["poc"])
+                (bear_slice["high"] >= bear_slice["bear_poc_lower"])
                 & ~bear_invalidated
                 & valid_poc
             )
@@ -197,44 +193,62 @@ class CVDDivergence(IStrategy):
             dataframe[price_col].diff().fillna(0) * cvd_condition
         )
 
-    @staticmethod
-    def _calculate_poc(group: DataFrame) -> float:
-        # Create a price-delta histogram
-        hist, bin_edges = np.histogram(group["close"], bins=50, weights=group["delta"])
-        bin_centers = (bin_edges[:-1] + bin_edges[1:]) / 2
+    def _calculate_poc(self, group: DataFrame) -> tuple:
 
-        # Find the price bin with the highest total delta (POC)
-        max_bin_index = np.argmax(hist)
-        poc = bin_centers[max_bin_index]
+        close = group["close"]
+        delta = group["delta"]
 
-        return poc
+        # Separate bullish and bearish deltas
+        bull_delta = np.where(
+            delta > 0, delta, 0
+        )  # Positive delta indicates buying pressure
+        bear_delta = -np.where(
+            delta < 0, delta, 0
+        )  # Negative delta indicates selling pressure
 
-    def _detect_regular_bullish_divergence(
-        self, dataframe: DataFrame, threshold: int
-    ) -> Series:
+        # Create price-delta histograms for bull and bear activity
+        bull_hist, bull_bin_edges = np.histogram(
+            close, bins=self.poc_histogram_bins.value, weights=bull_delta
+        )
+        bear_hist, bear_bin_edges = np.histogram(
+            close, bins=self.poc_histogram_bins.value, weights=bear_delta
+        )
+
+        # Find the price bins with the highest total delta for bull and bear activity
+        bull_max_bin_index = np.argmax(bull_hist)
+        bear_max_bin_index = np.argmax(bear_hist)
+
+        # Calculate the bin bounds for bull and bear POCs
+        bull_poc_lower = bull_bin_edges[bull_max_bin_index]
+        bull_poc_upper = bull_bin_edges[bull_max_bin_index + 1]
+        bear_poc_lower = bear_bin_edges[bear_max_bin_index]
+        bear_poc_upper = bear_bin_edges[bear_max_bin_index + 1]
+
+        return (
+            bear_poc_lower,
+            bear_poc_upper,
+            bull_poc_lower,
+            bull_poc_upper,
+        )
+
+    def _detect_regular_bullish_divergence(self, dataframe: DataFrame) -> Series:
         return self._detect_divergence(dataframe, "pivot_low", "low", 1) & (
-            dataframe["cvd"].diff().fillna(0) > threshold
+            dataframe["cvd"].diff().fillna(0) > self.divergence_threshold.value
         )
 
-    def _detect_hidden_bullish_divergence(
-        self, dataframe: DataFrame, threshold: int
-    ) -> Series:
+    def _detect_hidden_bullish_divergence(self, dataframe: DataFrame) -> Series:
         return self._detect_divergence(dataframe, "pivot_low", "low", -1) & (
-            dataframe["cvd"].diff().fillna(0) < -threshold
+            dataframe["cvd"].diff().fillna(0) < -self.divergence_threshold.value
         )
 
-    def _detect_regular_bearish_divergence(
-        self, dataframe: DataFrame, threshold: int
-    ) -> Series:
+    def _detect_regular_bearish_divergence(self, dataframe: DataFrame) -> Series:
         return self._detect_divergence(dataframe, "pivot_high", "high", 1) & (
-            dataframe["cvd"].diff().fillna(0) < -threshold
+            dataframe["cvd"].diff().fillna(0) < -self.divergence_threshold.value
         )
 
-    def _detect_hidden_bearish_divergence(
-        self, dataframe: DataFrame, threshold: int
-    ) -> Series:
+    def _detect_hidden_bearish_divergence(self, dataframe: DataFrame) -> Series:
         return self._detect_divergence(dataframe, "pivot_high", "high", -1) & (
-            dataframe["cvd"].diff().fillna(0) > threshold
+            dataframe["cvd"].diff().fillna(0) > self.divergence_threshold.value
         )
 
     def _calculate_vwap_and_bands(self, group: DataFrame) -> DataFrame:
@@ -253,36 +267,36 @@ class CVDDivergence(IStrategy):
 
         return group
 
-    def _daily_calculations(
-        self,
-        group: DataFrame,
-        pivot_window: int,
-        divergence_threshold: int,
-        cvd_ma_window: int,
-    ) -> DataFrame:
+    def _daily_calculations(self, group: DataFrame) -> DataFrame:
 
         # Calculate CVD and related indicators
         group["cvd"] = group["delta"].cumsum()
 
         # Calculate pivot points with optimizable window
         group["pivot_low"] = self._find_pivot(
-            group["cvd"], pivot_window // 2, pivot_window // 2, np.argmin
+            group["cvd"],
+            self.pivot_window.value // 2,
+            self.pivot_window.value // 2,
+            np.argmin,
         )
         group["pivot_high"] = self._find_pivot(
-            group["cvd"], pivot_window // 2, pivot_window // 2, np.argmax
+            group["cvd"],
+            self.pivot_window.value // 2,
+            self.pivot_window.value // 2,
+            np.argmax,
         )
 
         # Calculate CVD moving average with optimizable window
         group["cvd_ma"] = (
-            group["cvd"].rolling(window=cvd_ma_window, min_periods=1).mean()
+            group["cvd"].rolling(window=self.cvd_ma_window.value, min_periods=1).mean()
         )
 
         group["divergence"] = np.select(
             [
-                self._detect_regular_bullish_divergence(group, divergence_threshold),
-                self._detect_hidden_bullish_divergence(group, divergence_threshold),
-                self._detect_regular_bearish_divergence(group, divergence_threshold),
-                self._detect_hidden_bearish_divergence(group, divergence_threshold),
+                self._detect_regular_bullish_divergence(group),
+                self._detect_hidden_bullish_divergence(group),
+                self._detect_regular_bearish_divergence(group),
+                self._detect_hidden_bearish_divergence(group),
             ],
             [2, 1, -2, -1],
             default=0,
@@ -291,7 +305,12 @@ class CVDDivergence(IStrategy):
         # Calculate VWAP and bands
         group = self._calculate_vwap_and_bands(group)
 
-        group["poc"] = self._calculate_poc(group)
+        (
+            group["bull_poc_lower"],
+            group["bull_poc_upper"],
+            group["bear_poc_lower"],
+            group["bear_poc_upper"],
+        ) = self._calculate_poc(group)
 
         return group
 

@@ -11,13 +11,13 @@ python /freqtrade/main.py $EXCHANGE
 # freqtrade trade --config /freqtrade/config.json --strategy CVDDivergence
 
 # echo "Running backtesting"
-# freqtrade backtesting --strategy CVDDivergence --timerange 20240101-20240926 --timeframe 5m --max-open-trades 2 -p BTC/USDT:USDT --enable-protections --datadir /freqtrade/data
+# freqtrade backtesting --strategy CVDDivergence --timerange 20240923-20240927 --timeframe 1m --max-open-trades 2 -p BTC/USDT:USDT --enable-protections --datadir /freqtrade/data/binance
 
-# echo "Running hyperopt"
-# freqtrade hyperopt --hyperopt-loss SharpeHyperOptLossDaily --spaces buy --strategy CVDDivergence --datadir /freqtrade/data --max-open-trades 2 --timeframe 5m --timerange 20240101-20240926
+echo "Running hyperopt"
+freqtrade hyperopt --hyperopt-loss SharpeHyperOptLossDaily --spaces buy --strategy CVDDivergence --datadir /freqtrade/data/binance --max-open-trades 2 --timeframe 1m --timerange 20240923-20240927
 
 # echo "Downloading data"
-# freqtrade download-data --exchange $EXCHANGE --pairs ETH/USDT:USDT BTC/USDT:USDT --timeframe 5m --timerange 20240101-20240926 --trading-mode futures --datadir /freqtrade/data
+# freqtrade download-data --exchange $EXCHANGE --pairs BTC/USDT:USDT --timeframe 1m --timerange 20240923-20240927 --trading-mode futures --datadir /freqtrade/data/binance
 
-echo "Downloading trade data"
-freqtrade download-data -p BTC/USDT:USDT --timerange 20240101-20240926 --trading-mode futures --timeframes 5m --dl-trades
+# echo "Downloading trade data"
+# freqtrade download-data -p BTC/USDT:USDT --timerange 20240923-20240927 --trading-mode futures --timeframes 5m --dl-trades --exchange binance -v
